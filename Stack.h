@@ -1,7 +1,5 @@
 ﻿#pragma once
-#include <stdio.h>
-#include <iostream>
-#include <cassert>
+#include "my_utils.h"
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //! @file Stack.h
 //! Implements a stack class
@@ -63,49 +61,43 @@ private:
 	T data_[capacity_];
 	size_t size_;
 };
-//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-//! Macro to check a condition and exit if it failes
-//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-#define ASSERT_OK() \
-	if (!ok()) \
-	{ \
-		dump(); \
-		assert(!"ERROR"); \
-	}
 
 template <typename T>
-Stack::Stack() : size_(0)
+Stack<T>::Stack() : size_(0)
 {
+	PRINTOUT();
 	for (size_t i = 0; i < capacity_; i++)
 		data_[i] = 0;
 }
 
 template <typename T>
-T Stack::top()
+T Stack<T>::top()
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ > 0)
 		return data_[size_ - 1];
 	else
-		abort();
+		throw std::logic_error("No elements in the stack, top impossible");
 }
 
 template <typename T>
-bool Stack::empty()
+bool Stack<T>::empty()
 {
 	ASSERT_OK();
 	return !size_;
 }
 
 template <typename T>
-size_t Stack::size()
+size_t Stack<T>::size()
 {
 	return size_;
 }
 
 template <typename T>
-bool Stack::push(T value)
+bool Stack<T>::push(T value)
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ >= capacity_)
 		return false;
@@ -115,34 +107,35 @@ bool Stack::push(T value)
 }
 
 template <typename T>
-T Stack::pop()
+T Stack<T>::pop()
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ > 0)
 	{
-		value_type popValue = 0;
+		T popValue = 0;
 		popValue = data_[--size_];
 		data_[size_] = 0;
 		return popValue;
 	}
 	else
-		abort();
+		throw std::logic_error("size_ = 0, pop impossible");
 }
 
 template <typename T>
-size_t Stack::capacity()
+size_t Stack<T>::capacity()
 {
 	return capacity_;
 }
 
 template <typename T>
-bool Stack::ok() const
+bool Stack<T>::ok() const
 {
 	return size_ <= capacity_;
 }
 
 template <typename T>
-void Stack::dump() const
+void Stack<T>::dump() const
 {
 	std::cout << "capacity_ = " << capacity_ << std::endl;
 	std::cout << "size_ = " << size_ << std::endl;
