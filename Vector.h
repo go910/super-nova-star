@@ -1,6 +1,5 @@
 ﻿#pragma once
-#include <iostream>
-#include <cassert>
+#include "my_utils.h"
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //! @file Vector.h
 //! Implements a vector class
@@ -16,13 +15,13 @@ class Vector
 public:
 	
 	class IteratorForVector;
-	const int POISON_VALUE = 0xDEADDEAD;//!< Poison value
+	const T POISON_VALUE = T();//!< Poison value
 
 	Vector()
-		: size_(0), capacity_(10), data_(new T[capacity_])
+		//: size_(0), capacity_(10), 
+		//: data_(new T[capacity_])
 	{
-		std::cout << __FUNCTION__ << std::endl;
-		dump();
+		PRINTOUT();
 	}
 	
 	explicit Vector(size_t capacity)
@@ -33,29 +32,24 @@ public:
 			data_ = nullptr;
 		else
 			data_ = new T[capacity_];
-		std::cout << __FUNCTION__ << std::endl;
-		dump();
+		PRINTOUT();
 	};
 
 	Vector(const Vector& that)
 		: size_(that.size_), capacity_(that.capacity_), data_(new T[that.size_])
 	{
-		std::cout << __FUNCTION__  << "(copy)" << std::endl;
-		dump();
+		PRINTOUT();
 		Vector victim(that.capacity_);
 		for (size_t i = 0; i < that.size_; ++i)
 			victim.data_[i] = that.data_[i];
 		victim.size_ = that.size_;
-		std::swap(size_, victim.size_);
-		std::swap(capacity_, victim.capacity_);
-		std::swap(data_, victim.data_);
+		std::swap(this, victim);
 		dump();
 	};
 
 	~Vector()
 	{
-		std::cout << __FUNCTION__ << std::endl;
-		dump();
+		PRINTOUT();
 		delete[] data_;
 		size_ = POISON_VALUE;
 		data_ = nullptr;
@@ -64,23 +58,23 @@ public:
 		std::cout << "capacity_ = " << capacity_ << std::endl;
 	};
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator =
+	//! Override of operator =
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	const Vector& operator=(const Vector& that);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redeterminations of operator []
+	//! Override of operator []
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	const T& operator [] (size_t index);
 	T& operator [](IteratorForVector iterator);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ==
+	//! Override of operator ==
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	const bool operator== (Vector& rhs);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redeterminations of operator new
+	//! Overrides of operator new
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//void* operator new (size_t size, size_t n, int init);
-	//void* T::operator new[](size_t size, size_t n);
+	void* operator new (size_t size, int init);
+	void operator delete (void *p);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Checks the condition of the object
 	//! @return Result
@@ -144,20 +138,16 @@ private:
 	size_t size_;
 	size_t capacity_;
 	T* data_;
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	//! Nulls Vector (for operator new)
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	void setData();
 };
-
-#define ASSERT_OK() \
-	if (!ok()) \
-	{ \
-		dump(); \
-		assert(!"Imbalance of size of Vector"); \
-	}
 
 template <typename T>
 const Vector<T>& Vector<T>::operator= (const Vector<T>& that)
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
+	PRINTOUT();
 	if (&that == this)
 		return *this;
 	else
@@ -175,7 +165,8 @@ const Vector<T>& Vector<T>::operator= (const Vector<T>& that)
 template <typename T>
 const T& Vector<T>::operator[] (size_t index)
 {
-	assert(0 <= index && index < capacity_);
+	if (index < 0 || index >= capacity_)
+		throw std::logic_error("Exception: Index is out of Vector");
 	return data_[index];
 }
 
@@ -194,34 +185,43 @@ const bool Vector<T>::operator== (Vector<T>& that)
 	else if (size_ != that.size_)
 		return false;
 	for (size_t i = 0; i < size_; ++i)
-	{
 		if (data_[i] != that.data_[i])
 			return false;
-	}
 	return true;
 }
 
-//template <typename T>
-//void* Vector<T>::operator new(size_t size, size_t n, int init)
-//{
-//	std::cout << __FUNCTION__ << std::endl;
-//	void * p = malloc(size * n);
-//	memset(p, init, size * n);
-//	std::cout << "size = " << size << std::endl;
-//	std::cout << "n = " << n << std::endl;
+template <typename T>
+void* Vector<T>::operator new(size_t size, int init)
+{
+	if (init != 0)
+		throw std::logic_error("Exception: init is not NULL");
+	std::cout << __FUNCTION__ << std::endl;
 //	std::cout << "init = " << init << std::endl;
-//	std::cout << "sizeof(Vector<int>) = " << sizeof(Vector<int>) << std::endl;
-//	return p;
-//}
+//	std::cout << "n = " << n << std::endl;
+//	std::cout << "sizeof(Vector<int>) = " << sizeof(Vector<int>) << " " << size << std::endl;
+	void * p = malloc(size);
+//	std::cout << "size = " << size << std::endl;
+	(*(Vector<T> *)p).size_ = init;
+	(*(Vector<T> *)p).capacity_ = 10;
+	(*(Vector<T> *)p).data_ = new T[10];
+//	(*(Vector<T> *)p).dump();
+//	std::cout << "Checkpoint" << std::endl;
+	(*(Vector<T> *)p).setData();
+	return p;
+}
 
-//template <typename T>
-//void* T::operator new[](size_t size, size_t n)
-//{
-//	std::cout << __FUNCTION__ << std::endl;
-//	void * p = malloc(size * n);
-//	memset(p, 0, size * n);
-//	return p;
-//}
+template <typename T>
+void Vector<T>::operator delete(void *p)
+{
+	free(p);
+}
+
+template <typename T>
+void Vector<T>::setData()
+{
+	for (size_t i = 0; i < 10; ++i)
+		data_[i] = 0;
+}
 
 template <typename T>
 bool Vector<T>::ok() const
@@ -236,34 +236,26 @@ void Vector<T>::dump() const
 	std::cout << "capacity_ = " << capacity_ << std::endl;
 	std::cout << "Address of vector: " << this << std::endl;
 	if (data_ != nullptr)
-	{
 		for (size_t i = 0; i < capacity_; ++i)
 			std::cout << "[ " << i << " ] = " << data_[i] << std::endl;
-	}
-	//_getwch();
 }
 
 template <typename T>
 size_t Vector<T>::capacity()
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
 	return capacity_;
 }
 
 template <typename T>
 size_t Vector<T>::size()
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
 	return size_;
 }
 
 template <typename T>
 void Vector<T>::push_back(T add_elem)
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
+	PRINTOUT();
 	if (size_ >= capacity_)
 	{
 		size_t last_capacity = capacity_;
@@ -292,10 +284,12 @@ void Vector<T>::push_back(T add_elem)
 template <typename T>
 void Vector<T>::pop_back()
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
+	PRINTOUT();
 	ASSERT_OK();
-	data_[--size_] = POISON_VALUE;
+	if (size_ != 0)
+		data_[--size_] = POISON_VALUE;
+	else
+		throw std::logic_error("Exception: size_ = 0, pop_back impossible");
 	std::cout << std::endl;
 	dump();
 }
@@ -303,32 +297,27 @@ void Vector<T>::pop_back()
 template <typename T>
 T& Vector<T>::at(size_t pos)
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
+	PRINTOUT();
+	if (pos < 0 || pos >= size_)
+		throw std::logic_error("Exception: Index is out of Vector");
 	return *(data_ + pos);
 }
 
 template <typename T>
 T& Vector<T>::front()
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
 	return *(data_);
 }
 
 template <typename T>
 T& Vector<T>::back()
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
 	return *(data_ + size_ - 1);
 }
 
 template <typename T>
 bool Vector<T>::empty() const
 {
-	std::cout << __FUNCTION__ << std::endl;
-	//dump();
 	return !size_;
 }
 
@@ -340,37 +329,37 @@ class Vector<T>::IteratorForVector
 {
 public:
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator !=
+	//! Override of operator !=
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	bool operator!= (IteratorForVector& rhs)
 	{
 		return iterator_ != rhs.iterator_;
 	}
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ==
+	//! Override of operator ==
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	bool operator== (IteratorForVector& rhs)
 	{
 		return iterator_ == rhs.iterator_;
 	}
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ++
+	//! Override of operator ++
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForVector& operator++ ();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator --
+	//! Override of operator --
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForVector& operator-- ();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator -
+	//! Override of operator -
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForVector& operator- (size_t value);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator *
+	//! Override of operator *
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	T& operator* ();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ->
+	//! Override of operator ->
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	T* operator-> ();
 
@@ -434,7 +423,7 @@ size_t Vector<T>::IteratorForVector::counter()
 #define ASSERT_OK_IT() \
 if (!okForIterator()) \
 { \
-assert(!"Iterator went out of Vector"); \
+	throw std::logic_error("Iterator went out of Vector"); \
 }
 
 template <typename T>
@@ -455,7 +444,8 @@ void Vector<T>::IteratorForVector::increment()
 template <typename T>
 void Vector<T>::IteratorForVector::decrement()
 {
-	assert(counter_ != 0);
+	if (counter_ == 0)
+		throw std::logic_error("counter_ = 0, decrement impossible");
 	--iterator_;
 	--counter_;
 }
@@ -483,7 +473,8 @@ typename Vector<T>::IteratorForVector& Vector<T>::IteratorForVector::operator-- 
 template <typename T>
 typename Vector<T>::IteratorForVector& Vector<T>::IteratorForVector::operator- (size_t value)
 {
-	assert(counter_ != 0 && value < counter_);
+	if (counter == 0 && value > counter_)
+		throw std::logic_error("Exception: Vector has not elements");
 	iterator_ -= value;
 	counter_ -= value;
 	return *this;
@@ -510,3 +501,147 @@ typename Vector<T>::IteratorForVector Vector<T>::end()
 		++it;
 	return it;
 }
+
+//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+//! Specification of Vector class (for bool)
+//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+template <>
+class Vector <bool>
+{
+public:
+	class Proxy;
+	const unsigned char POISON_VALUE = unsigned char();
+	Vector()
+		: size_(0), capacity_(1), data_(new unsigned char[capacity_])
+	{
+		std::cout << "It's bool!" << std::endl;
+		data_[0] = POISON_VALUE;
+		PRINTOUT();
+	};
+	~Vector()
+	{
+		delete[] data_;
+		data_ = nullptr;
+		size_ = POISON_VALUE;
+		capacity_ = POISON_VALUE;
+//		std::cout << "capacity_ = " << capacity_ << std::endl;
+	};
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	//! Overrides of operator []
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	bool operator [] (int index) const
+	{
+		int bit = data_[index / 8] & 1 << (7 - index) ? 1 : 0;
+		return !!bit;
+	}
+	Proxy operator [](int index);
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	//! Displays information about condition of Vector <bool>
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	void dump();
+private:
+	size_t size_;
+	size_t capacity_;
+	unsigned char * data_;
+};
+
+void Vector<bool>::dump()
+{
+	std::cout << "size_ = " << size_ << std::endl;
+	std::cout << "capacity_ = " << capacity_ << std::endl;
+	std::cout << "Adress of vector<bool>: " << this << std::endl;
+	if (data_ != nullptr)
+		for (size_t i = 0; i < capacity_; ++i)
+		{
+			int bit = 0;
+			for (int j = 0; j < 8; ++j)
+			{
+				bit = data_[i] & 1 << j ? 1 : 0;
+				std::cout << bit << " ";
+			}
+			std::cout << std::endl;
+		}
+	else
+		throw std::logic_error("Exception: Pointer points to NULL");
+}
+//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+//! Proxy class (for Vector <bool>)
+//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+class Vector<bool>::Proxy
+{
+public:
+	Proxy(Vector<bool> * v, int index)
+		: data_pointer_(v->data_), index_(index)
+	{};
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	//! Overrides of operator =
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	Proxy& operator= (Proxy that)
+	{
+		std::cout << __FUNCTION__ << " (type is Proxy)" << std::endl;
+		bool byte[8] = {};
+		bool bit = 0;
+		for (int i = 0; i < 8; ++i)
+		{
+			bit = data_pointer_[index_ / 8] & 1 << i ? 1 : 0;
+			byte[i] = bit;
+			std::cout << byte[i] << " ";
+		}
+		std::cout << std::endl;
+		bit = that.data_pointer_[that.index_ / 8] & 1 << (that.index_ % 8) ? 1 : 0;
+		byte[index_ % 8] = bit;
+		double res = 0;
+		for (int i = 0; i < 8; ++i)
+		{
+			if (byte[i])
+			{
+				res += pow(2, (double)i);
+			}
+		}
+		data_pointer_[index_ / 8] = (unsigned char) res;
+		return *this;
+	}
+	Proxy& operator=(bool value)
+	{
+		std::cout << __FUNCTION__ << " (type is bool)" << std::endl;
+		bool byte[8] = {};
+		bool bit = 0;
+		for (int i = 0; i < 8; ++i)
+		{
+			bit = data_pointer_[index_ / 8] & 1 << i ? 1 : 0;
+			byte[i] = bit; 
+			std::cout << byte[i] << " "; 
+		}
+		std::cout << std::endl;
+		byte[index_ % 8] = value;
+		double res = 0;
+		for (int i = 0; i < 8; ++i)
+		{
+			if (byte[i])
+			{
+				res += pow(2, (double)i);
+			}
+		}
+		data_pointer_[index_ / 8] = (unsigned char) res;
+		return *this;
+	}
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	//! Override of operator bool
+	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+	operator bool()
+	{
+		std::cout << __FUNCTION__ << std::endl;
+		return (data_pointer_[index_ / 8] & (1 << (index_ % 8))) ? 1 : 0;
+	}
+private:
+	unsigned char * data_pointer_;
+	int index_;
+};
+
+typename Vector<bool>::Proxy Vector<bool>::operator [](int index)
+{
+	std::cout << std::endl << __FUNCTION__ << std::endl;
+	Vector<bool>::Proxy pr(this, index);
+	return pr;
+}
+
