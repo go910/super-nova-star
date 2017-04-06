@@ -1,6 +1,5 @@
 ﻿#pragma once
-#include <iostream>
-#include <cassert>
+#include "my_utils.h"
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //! @file Array.h
 //! Implements an array class
@@ -15,13 +14,12 @@ class Array
 {
 public:
 	class IteratorForArray;
-	const T POISON_VALUE = 0xDEADDEAD;
+	const T POISON_VALUE = T();
 
 	Array()
 		: capacity_(SIZE), size_(0)
 	{
-		std::cout << __FUNCTION__ << std::endl;
-		dump();
+		PRINTOUT();
 	};
 	~Array()
 	{
@@ -35,10 +33,10 @@ public:
 			"size_ = " << size_ << std::endl;
 	};
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redeterminations of operator []
+	//! Overrides of operator []
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	const T& operator[] (size_t index);
-	T& operator[] (IteratorForArray iterator);
+	T& operator[] (size_t index);
+	const T& operator[] (size_t index) const;
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Gives access to the element by index
 	//! @param Index of element
@@ -59,17 +57,17 @@ public:
 	//! Checks the existance of elements in array
 	//! @return Result
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	bool empty();
+	bool empty() const;
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Getter of size
 	//! @return Size of array
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	size_t size();
+	size_t size() const;
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Getter of capacity
 	//! @return Capacity of array
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	size_t capacity();
+	size_t capacity() const;
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Fills the array with specified values
 	//! @param The value to fill in the array
@@ -79,8 +77,9 @@ public:
 	//! Displays information about the state of array
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	void dump() const;
+	bool ok() const;
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Moves iterator to the first of array
+	//! Moves iterator to the beginning of array
 	//! @return Iterator on the first element
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForArray begin();
@@ -96,17 +95,23 @@ private:
 };
 
 template <typename T, size_t SIZE>
-const T& Array<T, SIZE>::operator[] (size_t index)
+T& Array<T, SIZE>::operator[] (size_t index)
 {
-	assert(0 <= index && index < capacity_);
+	ASSERT_OK();
+	PRINTOUT();
+	if (index < 0 || index >= size)
+		throw std::logic_error("Index went out of Array");
 	return data_[index];
 }
 
 template <typename T, size_t SIZE>
-T& Array<T, SIZE>::operator[] (IteratorForArray iterator)
+const T& Array<T, SIZE>::operator[] (size_t index) const
 {
-	// Need to redetermine compare operators
-	return data_[iterator.iterator()];
+	ASSERT_OK();
+	PRINTOUT();
+	if (index < 0 || index >= size)
+		throw std::logic_error("Index went out of Array");
+	return data_[index];
 }
 
 template <typename T, size_t SIZE>
@@ -128,19 +133,19 @@ T& Array<T, SIZE>::back()
 }
 
 template <typename T, size_t SIZE>
-bool Array<T, SIZE>::empty()
+bool Array<T, SIZE>::empty() const
 {
 	return !size_;
 }
 
 template <typename T, size_t SIZE>
-size_t Array<T, SIZE>::size()
+size_t Array<T, SIZE>::size() const
 {
 	return size_;
 }
 
 template <typename T, size_t SIZE>
-size_t Array<T, SIZE>::capacity()
+size_t Array<T, SIZE>::capacity() const
 {
 	return capacity_;
 }
@@ -148,14 +153,19 @@ size_t Array<T, SIZE>::capacity()
 template <typename T, size_t SIZE>
 void Array<T, SIZE>::fill(T value)
 {
-	std::cout << __FUNCTION__ << std::endl;
-	dump();
+	PRINTOUT();
 	for (size_t i = 0; i < capacity_; ++i)
 	{
 		data_[i] = value;
 		++size_;
 	}
 	dump();
+}
+
+template <typename T, size_t SIZE>
+bool Array<T, SIZE>::ok() const
+{
+	return size_ <= capacity_;
 }
 
 template <typename T, size_t SIZE>
@@ -176,7 +186,7 @@ class Array<T, SIZE>::IteratorForArray
 {
 public:
 	IteratorForArray (Array<T,SIZE>& that)
-		: iterator_(0), sizeOfArray_(that.size_), counter_(0)
+		: iterator_(that.data_), sizeOfArray_(that.size_), counter_(0)
 	{
 		std::cout << __FUNCTION__ << std::endl;
 	}
@@ -185,22 +195,23 @@ public:
 		std::cout << __FUNCTION__ << std::endl;
 	}
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ++
+	//! Override of operator ++
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForArray& operator++();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator --
+	//! Override of operator --
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	IteratorForArray& operator--();
+	T& operator*();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator !=
+	//! Override of operator !=
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	bool operator!= (IteratorForArray& rhs)
 	{
 		return iterator_ != rhs.iterator_;
 	}
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	//! Redetermination of operator ==
+	//! Override of operator ==
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	bool operator== (IteratorForArray& rhs)
 	{
@@ -222,7 +233,7 @@ public:
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	size_t counter();
 private:
-	size_t iterator_;
+	T * iterator_;
 	size_t sizeOfArray_;
 	size_t counter_;
 };
@@ -230,7 +241,8 @@ private:
 template <typename T, size_t SIZE>
 typename Array<T, SIZE>::IteratorForArray& Array<T, SIZE>::IteratorForArray::operator++ ()
 {
-	assert(counter_ <= sizeOfArray_);
+	if (counter_ > sizeOfArray_)
+		throw std::logic_error("Iterator points to the last element");
 	++iterator_;
 	++counter_;
 	return *this;
@@ -239,10 +251,17 @@ typename Array<T, SIZE>::IteratorForArray& Array<T, SIZE>::IteratorForArray::ope
 template <typename T, size_t SIZE>
 typename Array<T, SIZE>::IteratorForArray& Array<T, SIZE>::IteratorForArray::operator-- ()
 {
-	assert(counter_ != 0);
+	if (counter_ == 0)
+		throw std::logic_error("Iterator points to the first element");
 	--iterator_;
 	--counter_;
 	return *this;
+}
+
+template <typename T, size_t SIZE>
+T& Array<T, SIZE>::IteratorForArray::operator* ()
+{
+	return *iterator_;
 }
 
 template <typename T, size_t SIZE>
