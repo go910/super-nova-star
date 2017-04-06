@@ -1,27 +1,24 @@
 ﻿#pragma once
-#include <stdio.h>
-#include <iostream>
-#include <cassert>
+#include "my_utils.h"
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //! @file Stack.h
 //! Implements a stack class
 //!
-//! @author Den, 2017
+//! @author Denis & Ilya, 2017
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 //! Stack class
 //‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
+template <typename T>
 class Stack
 {
 public:
-	typedef float value_type; //!< Elements type
-	typedef size_t size_type; //!< Size type
 	Stack();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Returns the top element of the stack
 	//! @return Top element
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	value_type top();
+	T top();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Checks the existance of elements in the stack
 	//! @return Result
@@ -31,24 +28,24 @@ public:
 	//! Returns the size of stack
 	//! @return Size of stack
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	size_type size();
+	size_t size();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Pushes a value to the stack
 	//! @param Value is an element to be pushed
 	//! @return Success of operation
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	bool push(value_type value);
+	bool push(T value);
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Returns the top element from the stack
 	//! and than delete this element
 	//! @return Top element
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	value_type pop();
+	T pop();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Returns capacity of the stack
 	//! @return Capacity
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-	size_type capacity();
+	size_t capacity();
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	//! Checks the stack overflow
 	//! @return Result
@@ -60,48 +57,47 @@ public:
 	//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
 	void dump() const;
 private:
-	static const size_type capacity_ = 10;
-	value_type data_[capacity_];
-	size_type size_;
+	static const size_t capacity_ = 10;
+	T data_[capacity_];
+	size_t size_;
 };
-//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-//! Macro to check a condition and exit if it failes
-//‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐‐
-#define ASSERT_OK() \
-	if (!ok()) \
-	{ \
-		dump(); \
-		assert(!"ERROR"); \
-	}
 
-Stack::Stack() : size_(0)
+template <typename T>
+Stack<T>::Stack() : size_(0)
 {
+	PRINTOUT();
 	for (size_t i = 0; i < capacity_; i++)
 		data_[i] = 0;
 }
 
-Stack::value_type Stack::top()
+template <typename T>
+T Stack<T>::top()
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ > 0)
 		return data_[size_ - 1];
 	else
-		abort();
+		throw std::logic_error("No elements in the stack, top impossible");
 }
 
-bool Stack::empty()
+template <typename T>
+bool Stack<T>::empty()
 {
 	ASSERT_OK();
 	return !size_;
 }
 
-Stack::size_type Stack::size()
+template <typename T>
+size_t Stack<T>::size()
 {
 	return size_;
 }
 
-bool Stack::push(value_type value)
+template <typename T>
+bool Stack<T>::push(T value)
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ >= capacity_)
 		return false;
@@ -110,31 +106,36 @@ bool Stack::push(value_type value)
 	return true;
 }
 
-Stack::value_type Stack::pop()
+template <typename T>
+T Stack<T>::pop()
 {
+	PRINTOUT();
 	ASSERT_OK();
 	if (size_ > 0)
 	{
-		value_type popValue = 0;
+		T popValue = 0;
 		popValue = data_[--size_];
 		data_[size_] = 0;
 		return popValue;
 	}
 	else
-		abort();
+		throw std::logic_error("size_ = 0, pop impossible");
 }
 
-Stack::size_type Stack::capacity()
+template <typename T>
+size_t Stack<T>::capacity()
 {
 	return capacity_;
 }
 
-bool Stack::ok() const
+template <typename T>
+bool Stack<T>::ok() const
 {
 	return size_ <= capacity_;
 }
 
-void Stack::dump() const
+template <typename T>
+void Stack<T>::dump() const
 {
 	std::cout << "capacity_ = " << capacity_ << std::endl;
 	std::cout << "size_ = " << size_ << std::endl;
